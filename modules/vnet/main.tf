@@ -1,9 +1,18 @@
 resource "azurerm_virtual_network" "vnet" {
-  name                = var.vnet_name
+  name                = coalesce(var.virtual_network_name, "${var.tags.project}-${var.tags.environment}-vnet")
   location            = var.location
   resource_group_name = var.resource_group_name
   address_space       = var.address_space
   dns_servers         = var.dns_servers
+    
+    tags = merge(
+    {
+      "Environment" = var.tags.environment,
+      "Project"     = var.tags.project
+    },
+    var.extra_tags
+  )
+}
 
 resource "azurerm_subnet" "subnets" {
   for_each             = { for s in var.subnets : s.name => s }

@@ -3,9 +3,9 @@ output "name" {
   description = "The name of the Azure Resource Group."
 }
 
-output "vnet_name" {
-  value       = azurerm_virtual_network.vnet.name
-  description = "The name for Virtual Network"
+output "id" {
+  value       = azurerm_virtual_network.vnet.id
+  description = "Virtual Network ID"
 }
 
 output "location" {
@@ -18,9 +18,22 @@ output "address_space" {
   description = "The address space for the virtual network."
 }
  
-# output "tags" {
-#   value = azurerm_network_security_group.name.tags
-#   description = "The tags for the VNet"
+output "rg" {
+  value = azurerm_virtual_network.vnet
+  description = "Virtual Network Resources Group"
   
-# }
+}
 
+output "subnet_names" {
+    value = azurerm_subnet.subnets.name
+    description = "csdsfs"
+}
+
+output "subnet_ids" {
+  value = azurerm_virtual_network.vnet.subnet_ids
+  description = "value"
+}
+output "subnets" {
+  description = "Map of all subnet resources keyed by subnet name"
+  value       = azurerm_virtual_network.vnet.subnets
+}
