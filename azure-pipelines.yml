@@ -1,0 +1,59 @@
+trigger:
+- master # You can customize the branch trigger as needed
+
+pr:
+- master
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  AZURE_REGION: 'your_azure_region'
+  TERRAFORM_VARIABLE_CONTAINER_NAME: 'your_terraform_variable_container_name'
+  TERRAFORM_VARIABLE_FILE_PATH: 'your_terraform_variable_file_path'
+  TERRAFORM_STATE_CONTAINER_NAME: 'your_terraform_state_container_name'
+
+jobs:
+- job: TerraformJob
+  displayName: 'Terraform Deployment'
+  steps:
+  - task: UseDotNet@2
+    inputs:
+      packageType: 'sdk'
+      version: '3.x'
+
+  - script: |
+      # Install Terraform
+      wget https://releases.hashicorp.com/terraform/1.6.5/terraform_1.6.5_linux_amd64.zip
+      unzip terraform_1.6.5_linux_amd64.zip
+      sudo mv terraform /usr/local/bin/
+      terraform version
+
+  - script: |
+      # Set up Azure credentials and other environment variables
+      # Adjust this part based on your Azure authentication method (Service Principal, Managed Identity, etc.)
+      az login --service-principal -u <client-id> -p <client-secret> --tenant <tenant-id>
+      export TF_VAR_client_id=<client-id>
+      export TF_VAR_client_secret=<client-secret>
+      export TF_VAR_tenant_id=<tenant-id>
+      export AZURE_STORAGE_ACCOUNT_KEY=$(az storage account keys list --resource-group <resource-group> --account-name <storage-account-name> --query '[0].value' --output tsv)
+      export S3_BUCKET_NAME=$(TERRAFORM_VARIABLE_CONTAINER_NAME)
+      export S3_FILE_KEY=$(TERRAFORM_VARIABLE_FILE_PATH)/terraform.tfvars
+      export CODEBUILD_DESTINATION=./infra/
+
+      # Copy environment-wise Terraform variable file
+      az storage blob download --account-name $S3_BUCKET_NAME --container-name $TERRAFORM_VARIABLE_CONTAINER_NAME --name $S3_FILE_KEY --type block --file $CODEBUILD_DESTINATION/terraform.tfvars
+
+      # Create Terraform state storage account if it doesn't exist
+      az storage account create --name $TERRAFORM_STATE_CONTAINER_NAME --resource-group <resource-group> --location $AZURE_REGION --sku Standard_LRS
+  - script: |
+      # Terraform commands
+      echo Initializing Terraform...
+      terraform init
+      echo Selecting/Creating Terraform workspace...
+      terraform workspace new development || true
+      terraform workspace select development
+      echo Planning Terraform...
+      terraform plan
+      echo Applying Terraform...
+      terraform apply --auto-approve
