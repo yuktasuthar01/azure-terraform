@@ -25,15 +25,18 @@ output "rg" {
 }
 
 output "subnet_names" {
-    value = azurerm_subnet.subnets.name
-    description = "csdsfs"
+  value       = { for subnet_key, subnet in azurerm_subnet.subnets : subnet_key => subnet.name }
+  description = " List of Subnet Name"
 }
 
+
 output "subnet_ids" {
-  value = azurerm_virtual_network.vnet.subnet_ids
-  description = "value"
+  value       = [for subnet in azurerm_subnet.subnets : subnet.id]
+  description = "Subnet IDs"
 }
+
 output "subnets" {
   description = "Map of all subnet resources keyed by subnet name"
-  value       = azurerm_virtual_network.vnet.subnets
+  value       = azurerm_subnet.subnets
 }
+

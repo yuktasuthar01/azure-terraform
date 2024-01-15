@@ -3,7 +3,7 @@ variable "address_space" {
   type        = list(string)
 }
 
-variable "virtual_network_name" {
+variable "vnet_name" {
   description = "The name of the virtual network"
   type        = string
   default     = null
@@ -27,16 +27,7 @@ variable "dns_servers" {
 
 variable "tags" {
   description = "Tags to be applied to resources (inclusive)"
-  type = object({
-    environment = string
-    project     = string
-  })
-}
-
-variable "extra_tags" {
-  description = "extra tags to be applied to resources (in addition to the tags above)"
-  type        = map(string)
-  default     = {}
+  type = map(string)
 }
 
 variable "subnets" {
